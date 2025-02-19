@@ -1,5 +1,5 @@
 # PROJEK GTIDS25 - SISTEM MUDAH ALIH MICROSLEEP BERSAMA AI CHATBOX
-Untuk projek GTISD24 - GERAN 30K (Bersama Dr. Nor & Dr.Ezzad
+Untuk projek GTISD24 - GERAN 30K (Bersama Dr. Nor & Dr.Ezzad)
 
 ## Dependencies
 1. flutter:
