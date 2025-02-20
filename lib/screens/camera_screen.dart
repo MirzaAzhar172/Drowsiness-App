@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'dart:typed_data'; // ✅ FIXED: Gantikan 'dart:ui' dengan 'dart:typed_data'
+import 'dart:typed_data';
 import '../utils/drowsiness_detector.dart';
 
 class CameraScreen extends StatefulWidget {
@@ -32,7 +32,7 @@ class _CameraScreenState extends State<CameraScreen> {
       _cameras = await availableCameras();
       if (_cameras.isNotEmpty) {
         final frontCamera = _cameras.firstWhere(
-          (camera) => camera.lensDirection == CameraLensDirection.front,
+              (camera) => camera.lensDirection == CameraLensDirection.front,
           orElse: () => _cameras.first,
         );
 
@@ -69,13 +69,12 @@ class _CameraScreenState extends State<CameraScreen> {
             );
 
             if (inputImage != null) {
-              final isDrowsy = await _drowsinessDetector!.processCameraImage(inputImage);
-              final isYawning = await _detectYawning(inputImage);
+              final result = await _drowsinessDetector!.processCameraImage(inputImage);
 
               if (mounted) {
                 setState(() {
-                  _isDrowsy = isDrowsy;
-                  _isYawning = isYawning;
+                  _isDrowsy = result['drowsy'] ?? false;
+                  _isYawning = result['yawning'] ?? false;
                 });
 
                 if (_isDrowsy || _isYawning) {
@@ -94,9 +93,9 @@ class _CameraScreenState extends State<CameraScreen> {
 
   InputImage? _convertCameraImageToInputImage(
       CameraImage cameraImage, CameraDescription cameraDescription) {
-    final BytesBuilder allBytes = BytesBuilder(); // ✅ FIXED
+    final BytesBuilder allBytes = BytesBuilder();
     for (final Plane plane in cameraImage.planes) {
-      allBytes.add(plane.bytes); // ✅ FIXED
+      allBytes.add(plane.bytes);
     }
     final bytes = allBytes.toBytes();
 
@@ -119,31 +118,9 @@ class _CameraScreenState extends State<CameraScreen> {
     return InputImage.fromBytes(bytes: bytes, metadata: metadata);
   }
 
-  Future<bool> _detectYawning(InputImage inputImage) async {
-    final FaceDetector faceDetector = FaceDetector(
-      options: FaceDetectorOptions(enableLandmarks: true),
-    );
-
-    final List<Face> faces = await faceDetector.processImage(inputImage);
-
-    for (Face face in faces) {
-      final leftMouth = face.landmarks[FaceLandmarkType.leftMouth]?.position;
-      final rightMouth = face.landmarks[FaceLandmarkType.rightMouth]?.position;
-
-      if (leftMouth != null && rightMouth != null) {
-        double mouthOpen = (rightMouth.y - leftMouth.y).abs().toDouble();
-
-        if (mouthOpen > 10.0) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
   void _playAlertSound() {
     print('ALERT: Drowsiness or Yawning detected!');
+    // Implement actual sound alert here
   }
 
   @override
@@ -163,7 +140,7 @@ class _CameraScreenState extends State<CameraScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text('Drowsiness & Yawn Detection')),
+      appBar: AppBar(title: Text('DROWY APP for Driver')),
       body: Column(
         children: [
           Expanded(
@@ -182,15 +159,19 @@ class _CameraScreenState extends State<CameraScreen> {
               children: [
                 Text(
                   (_isDrowsy || _isYawning)
-                      ? 'AWAS! ANDA MENGANTUK ATAU MENGUAP!'
-                      : 'Status: Berjaga',
-                  style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      ? 'AWAS! ${_isDrowsy ? "MENGANTUK!" : "MENGUAP!"}'
+                      : 'Status: Active',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold
+                  ),
                 ),
                 SizedBox(height: 8),
                 Text(
                   (_isDrowsy || _isYawning)
-                      ? 'Sila berhenti memandu dan berehat'
-                      : 'Sistem pengesanan aktif',
+                      ? 'Sila berhenti memandu/berehat'
+                      : 'Detector system activate',
                   style: TextStyle(color: Colors.white),
                 ),
               ],
